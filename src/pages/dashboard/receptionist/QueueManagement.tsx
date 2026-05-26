@@ -1,20 +1,29 @@
-import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle, Clock, AlertTriangle, ArrowRight, UserCheck } from 'lucide-react'
-import { mockAppointments } from '../../../data/mockData'
+import { CheckCircle, Clock, AlertTriangle, ArrowRight, UserCheck, Play } from 'lucide-react'
+import { useDataStore } from '../../../store/dataStore'
 import toast from 'react-hot-toast'
 
 export default function QueueManagement() {
-  const [queue, setQueue] = useState(mockAppointments.map((a, i) => ({ ...a, queueNum: i + 1 })))
+  const { appointments, updateAppointmentStatus } = useDataStore()
 
-  const checkIn = (id: string) => {
-    setQueue(prev => prev.map(a => a.id === id ? { ...a, status: 'In Progress' } : a))
-    toast.success('Patient checked in!')
+  const queue = appointments.map((a, i) => ({ ...a, queueNum: i + 1 }))
+
+  const handleStatusChange = (id: string, newStatus: 'Waiting' | 'In Progress' | 'Confirmed') => {
+    updateAppointmentStatus(id, newStatus)
+    const msgs = {
+      'Waiting': 'Patient checked in & marked as Waiting',
+      'In Progress': 'Patient sent to consultation room',
+      'Confirmed': 'Consultation completed successfully!'
+    }
+    toast.success(msgs[newStatus])
   }
 
-  const complete = (id: string) => {
-    setQueue(prev => prev.map(a => a.id === id ? { ...a, status: 'Confirmed' } : a))
-    toast.success('Consultation complete!')
+  const badgeColors: Record<string, string> = {
+    Scheduled: 'bg-slate-100 text-slate-700',
+    Waiting: 'badge-warning',
+    'In Progress': 'badge-info',
+    Confirmed: 'badge-success',
+    Cancelled: 'badge-danger',
   }
 
   return (
@@ -53,20 +62,28 @@ export default function QueueManagement() {
                 <div className="text-xs text-gray-500">{a.doctorName} · {a.time} · {a.type}</div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`badge ${a.status === 'Waiting' ? 'badge-warning' : a.status === 'In Progress' ? 'badge-info' : 'badge-success'}`}>{a.status}</span>
-                {a.status === 'Waiting' && (
-                  <button onClick={() => checkIn(a.id)} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors flex items-center gap-1">
+                <span className={`badge ${badgeColors[a.status] || 'badge-info'}`}>{a.status}</span>
+                {a.status === 'Scheduled' && (
+                  <button onClick={() => handleStatusChange(a.id, 'Waiting')} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors flex items-center gap-1">
                     <UserCheck size={12} /> Check In
                   </button>
                 )}
+                {a.status === 'Waiting' && (
+                  <button onClick={() => handleStatusChange(a.id, 'In Progress')} className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors flex items-center gap-1">
+                    <Play size={12} /> Send to Doctor
+                  </button>
+                )}
                 {a.status === 'In Progress' && (
-                  <button onClick={() => complete(a.id)} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-1">
+                  <button onClick={() => handleStatusChange(a.id, 'Confirmed')} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-1">
                     <CheckCircle size={12} /> Complete
                   </button>
                 )}
               </div>
             </motion.div>
           ))}
+          {queue.length === 0 && (
+            <div className="text-center py-8 text-gray-400">No appointments scheduled for today.</div>
+          )}
         </div>
       </div>
     </div>

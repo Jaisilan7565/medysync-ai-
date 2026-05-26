@@ -1,21 +1,28 @@
 import { motion } from 'framer-motion'
-import { Calendar, Users, Clock, CheckCircle, Activity, Stethoscope } from 'lucide-react'
-import { mockAppointments, mockPatients } from '../../../data/mockData'
+import { Calendar, Users, Clock, CheckCircle, Activity } from 'lucide-react'
 import { useAuthStore } from '../../../store/authStore'
+import { useDataStore } from '../../../store/dataStore'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { mockAppointmentStats } from '../../../data/mockData'
 
 export default function DoctorDashboard() {
   const { user } = useAuthStore()
-  const myAppts = mockAppointments.filter(a => a.doctorName.includes('Priya'))
-  const todayAppts = myAppts.slice(0, 4)
+  const { appointments } = useDataStore()
+  
+  const myAppts = appointments.filter(a => {
+    if (!user?.name) return false
+    const cleanDocName = user.name.replace('Dr. ', '').toLowerCase().trim()
+    return a.doctorName.toLowerCase().includes(cleanDocName)
+  })
+  
+  const todayAppts = myAppts.filter(a => a.status !== 'Cancelled').slice(0, 4)
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Doctor Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Welcome back, {user?.name?.split(' ').slice(-1)[0]} 👨‍⚕️ — Thursday, May 15, 2026</p>
+          <p className="text-gray-500 text-sm mt-0.5">Welcome back, {user?.name?.replace('Dr. ', '')} 👨‍⚕️ — Thursday, May 15, 2026</p>
         </div>
         <div className="px-4 py-2 bg-blue-50 border border-blue-200 rounded-xl text-sm font-semibold text-blue-700">
           {user?.department || 'Cardiology'}
@@ -25,10 +32,10 @@ export default function DoctorDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Today's Patients", value: '12', icon: Users, bg: 'bg-blue-50', color: 'text-blue-600' },
+          { label: "Today's Patients", value: myAppts.filter(a => a.status === 'Confirmed' || a.status === 'In Progress').length.toString(), icon: Users, bg: 'bg-blue-50', color: 'text-blue-600' },
           { label: 'Appointments', value: myAppts.length, icon: Calendar, bg: 'bg-violet-50', color: 'text-violet-600' },
           { label: 'Avg Wait Time', value: '14 min', icon: Clock, bg: 'bg-amber-50', color: 'text-amber-600' },
-          { label: 'Completed Today', value: '8', icon: CheckCircle, bg: 'bg-emerald-50', color: 'text-emerald-600' },
+          { label: 'Completed Today', value: myAppts.filter(a => a.status === 'Confirmed').length.toString(), icon: CheckCircle, bg: 'bg-emerald-50', color: 'text-emerald-600' },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="stat-card">
             <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}><s.icon size={18} className={s.color} /></div>
@@ -61,10 +68,10 @@ export default function DoctorDashboard() {
           <h3 className="font-bold text-gray-900 mb-4">Today's Overview</h3>
           <div className="space-y-3">
             {[
-              { label: 'Waiting', count: 2, color: 'bg-amber-500' },
-              { label: 'In Progress', count: 1, color: 'bg-blue-500' },
-              { label: 'Completed', count: 8, color: 'bg-emerald-500' },
-              { label: 'Upcoming', count: 3, color: 'bg-violet-500' },
+              { label: 'Waiting', count: myAppts.filter(a => a.status === 'Waiting').length, color: 'bg-amber-500' },
+              { label: 'In Progress', count: myAppts.filter(a => a.status === 'In Progress').length, color: 'bg-blue-500' },
+              { label: 'Completed', count: myAppts.filter(a => a.status === 'Confirmed').length, color: 'bg-emerald-500' },
+              { label: 'Upcoming', count: myAppts.filter(a => a.status === 'Scheduled').length, color: 'bg-violet-500' },
             ].map(s => (
               <div key={s.label} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -101,6 +108,9 @@ export default function DoctorDashboard() {
               </div>
             </div>
           ))}
+          {todayAppts.length === 0 && (
+            <div className="text-center py-6 text-gray-400 text-sm">No scheduled appointments today.</div>
+          )}
         </div>
       </motion.div>
     </div>

@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  const { register } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'patient' })
 
@@ -17,9 +17,9 @@ export default function RegisterPage() {
     setLoading(true)
     await new Promise(r => setTimeout(r, 1000))
     const user = { id: `U${Date.now()}`, name: form.name, email: form.email, role: form.role as any, phone: form.phone }
-    login(user, `token_${Date.now()}`)
+    register(user, form.password)
     toast.success('Account created successfully!')
-    const routes: Record<string, string> = { admin: '/dashboard/admin', doctor: '/dashboard/doctor', receptionist: '/dashboard/receptionist', patient: '/dashboard/patient' }
+    const routes: Record<string, string> = { admin: '/dashboard/admin', doctor: '/dashboard/doctor', receptionist: '/dashboard/receptionist', patient: '/dashboard/patient', pharmacy: '/dashboard/pharmacy' }
     navigate(routes[form.role])
     setLoading(false)
   }
@@ -65,6 +65,7 @@ export default function RegisterPage() {
               <option value="doctor">Doctor</option>
               <option value="receptionist">Receptionist</option>
               <option value="admin">Admin</option>
+              <option value="pharmacy">Pharmacy</option>
             </select>
           </div>
           <div>

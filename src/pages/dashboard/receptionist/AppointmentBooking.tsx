@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, CheckCircle, MessageSquare } from 'lucide-react'
-import { mockDoctors, mockPatients } from '../../../data/mockData'
+import { useDataStore } from '../../../store/dataStore'
 import toast from 'react-hot-toast'
 
 export default function AppointmentBooking() {
+  const { patients, doctors, addAppointment } = useDataStore()
   const [form, setForm] = useState({ patientId: '', doctorId: '', date: '', time: '', type: 'Consultation', notes: '' })
   const [booked, setBooked] = useState(false)
   const [showWhatsApp, setShowWhatsApp] = useState(false)
@@ -12,6 +13,29 @@ export default function AppointmentBooking() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.patientId || !form.doctorId || !form.date || !form.time) { toast.error('Please fill required fields'); return }
+    
+    const selectedPatient = patients.find(p => p.id === form.patientId)
+    const selectedDoctor = doctors.find(d => d.id === form.doctorId)
+    
+    if (!selectedPatient || !selectedDoctor) {
+      toast.error('Patient or Doctor not found')
+      return
+    }
+
+    addAppointment({
+      patientId: selectedPatient.id,
+      patientName: selectedPatient.name,
+      doctorId: selectedDoctor.id,
+      doctorName: selectedDoctor.name,
+      date: form.date,
+      time: form.time,
+      type: form.type,
+      department: selectedDoctor.department,
+      priority: form.type === 'Emergency' ? 'Emergency' : 'Normal',
+      notes: form.notes,
+      fee: selectedDoctor.consultationFee,
+    })
+
     setBooked(true)
     toast.success('Appointment booked successfully!')
     setTimeout(() => setShowWhatsApp(true), 1000)
@@ -30,14 +54,14 @@ export default function AppointmentBooking() {
             <label className="form-label">Patient *</label>
             <select className="form-input" value={form.patientId} onChange={e => setForm({ ...form, patientId: e.target.value })}>
               <option value="">Select patient...</option>
-              {mockPatients.map(p => <option key={p.id} value={p.id}>{p.name} — {p.id}</option>)}
+              {patients.map(p => <option key={p.id} value={p.id}>{p.name} — {p.id}</option>)}
             </select>
           </div>
           <div>
             <label className="form-label">Doctor *</label>
             <select className="form-input" value={form.doctorId} onChange={e => setForm({ ...form, doctorId: e.target.value })}>
               <option value="">Select doctor...</option>
-              {mockDoctors.filter(d => d.status !== 'On Leave').map(d => <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>)}
+              {doctors.filter(d => d.status !== 'On Leave').map(d => <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">

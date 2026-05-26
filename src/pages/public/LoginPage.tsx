@@ -10,6 +10,7 @@ const demoCredentials = [
   { role: 'Doctor', email: 'doctor@medisync.ai', password: 'doctor123', color: 'from-emerald-500 to-teal-500' },
   { role: 'Receptionist', email: 'receptionist@medisync.ai', password: 'recept123', color: 'from-violet-500 to-purple-500' },
   { role: 'Patient', email: 'patient@medisync.ai', password: 'patient123', color: 'from-rose-500 to-pink-500' },
+  { role: 'Pharmacy', email: 'pharmacy@medisync.ai', password: 'pharmacy123', color: 'from-amber-500 to-yellow-500' },
 ]
 
 export default function LoginPage() {
@@ -29,7 +30,7 @@ export default function LoginPage() {
     if (result) {
       login(result.user, result.token)
       toast.success(`Welcome back, ${result.user.name.split(' ')[0]}!`)
-      const routes: Record<string, string> = { admin: '/dashboard/admin', doctor: '/dashboard/doctor', receptionist: '/dashboard/receptionist', patient: '/dashboard/patient' }
+      const routes: Record<string, string> = { admin: '/dashboard/admin', doctor: '/dashboard/doctor', receptionist: '/dashboard/receptionist', patient: '/dashboard/patient', pharmacy: '/dashboard/pharmacy' }
       navigate(routes[result.user.role])
     } else {
       toast.error('Invalid email or password')

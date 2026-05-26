@@ -28,11 +28,13 @@ import DoctorPrescriptions from './pages/dashboard/doctor/DoctorPrescriptions'
 import ReceptionistDashboard from './pages/dashboard/receptionist/ReceptionistDashboard'
 import QueueManagement from './pages/dashboard/receptionist/QueueManagement'
 import AppointmentBooking from './pages/dashboard/receptionist/AppointmentBooking'
+import RegisterPatient from './pages/dashboard/receptionist/RegisterPatient'
 
 // Patient pages
 import PatientDashboard from './pages/dashboard/patient/PatientDashboard'
 import PatientHistory from './pages/dashboard/patient/PatientHistory'
 import PatientBills from './pages/dashboard/patient/PatientBills'
+import PharmacyDashboard from './pages/dashboard/pharmacy/PharmacyDashboard'
 
 // Shared pages
 import AppointmentsPage from './pages/dashboard/shared/AppointmentsPage'
@@ -59,6 +61,7 @@ function DashboardRedirect() {
     doctor: '/dashboard/doctor',
     receptionist: '/dashboard/receptionist',
     patient: '/dashboard/patient',
+    pharmacy: '/dashboard/pharmacy',
   }
   return <Navigate to={roleMap[user?.role || 'patient'] || '/login'} replace />
 }
@@ -102,11 +105,16 @@ export default function App() {
           <Route path="receptionist" element={<RoleRoute allowedRoles={['receptionist']}><ReceptionistDashboard /></RoleRoute>} />
           <Route path="receptionist/queue" element={<RoleRoute allowedRoles={['receptionist']}><QueueManagement /></RoleRoute>} />
           <Route path="receptionist/book" element={<RoleRoute allowedRoles={['receptionist']}><AppointmentBooking /></RoleRoute>} />
+          <Route path="receptionist/register-patient" element={<RoleRoute allowedRoles={['receptionist']}><RegisterPatient /></RoleRoute>} />
 
           {/* Patient */}
           <Route path="patient" element={<RoleRoute allowedRoles={['patient']}><PatientDashboard /></RoleRoute>} />
           <Route path="patient/history" element={<RoleRoute allowedRoles={['patient']}><PatientHistory /></RoleRoute>} />
           <Route path="patient/bills" element={<RoleRoute allowedRoles={['patient']}><PatientBills /></RoleRoute>} />
+
+          {/* Pharmacy */}
+          <Route path="pharmacy" element={<RoleRoute allowedRoles={['pharmacy']}><PharmacyDashboard /></RoleRoute>} />
+          <Route path="pharmacy/prescriptions" element={<RoleRoute allowedRoles={['pharmacy']}><PharmacyDashboard /></RoleRoute>} />
 
           {/* Shared */}
           <Route path="appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />

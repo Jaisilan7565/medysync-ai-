@@ -1,17 +1,34 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Plus, Edit2, Trash2, Eye, Filter, Download, UserRound, Phone, Mail, Droplets } from 'lucide-react'
-import { mockPatients } from '../../../data/mockData'
+import { Search, Plus, Edit2, Trash2, Eye, Download, UserRound, Phone, Mail, Droplets } from 'lucide-react'
+import { useDataStore, Patient } from '../../../store/dataStore'
 import toast from 'react-hot-toast'
 
 const statusColor: Record<string, string> = { Active: 'badge-success', Inactive: 'badge-warning', Critical: 'badge-danger' }
 
 export default function PatientsPage() {
+  const { patients, addPatient, updatePatient, deletePatient, doctors } = useDataStore()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
-  const [patients, setPatients] = useState(mockPatients)
   const [showModal, setShowModal] = useState(false)
-  const [viewPatient, setViewPatient] = useState<typeof mockPatients[0] | null>(null)
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add')
+  const [editId, setEditId] = useState<string | null>(null)
+  const [viewPatient, setViewPatient] = useState<Patient | null>(null)
+
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    age: '',
+    gender: 'Male',
+    bloodGroup: 'O+',
+    department: 'Cardiology',
+    doctor: 'Dr. Priya Mehta',
+    allergies: 'None',
+    insurance: 'None',
+    condition: 'General Health Checkup',
+    status: 'Active' as Patient['status'],
+  })
 
   const filtered = patients.filter(p =>
     (statusFilter === 'All' || p.status === statusFilter) &&
@@ -19,8 +36,88 @@ export default function PatientsPage() {
   )
 
   const handleDelete = (id: string) => {
-    setPatients(prev => prev.filter(p => p.id !== id))
+    deletePatient(id)
     toast.success('Patient record removed')
+  }
+
+  const openAddModal = () => {
+    setModalMode('add')
+    setForm({
+      name: '',
+      email: '',
+      phone: '',
+      age: '',
+      gender: 'Male',
+      bloodGroup: 'O+',
+      department: 'Cardiology',
+      doctor: 'Dr. Priya Mehta',
+      allergies: 'None',
+      insurance: 'None',
+      condition: 'General Health Checkup',
+      status: 'Active',
+    })
+    setShowModal(true)
+  }
+
+  const openEditModal = (p: Patient) => {
+    setModalMode('edit')
+    setEditId(p.id)
+    setForm({
+      name: p.name,
+      email: p.email,
+      phone: p.phone,
+      age: String(p.age),
+      gender: p.gender,
+      bloodGroup: p.bloodGroup,
+      department: p.department,
+      doctor: p.doctor,
+      allergies: p.allergies,
+      insurance: p.insurance,
+      condition: p.condition,
+      status: p.status,
+    })
+    setShowModal(true)
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name || !form.email || !form.phone || !form.age) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    const patientData = {
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      age: parseInt(form.age) || 30,
+      gender: form.gender,
+      bloodGroup: form.bloodGroup,
+      department: form.department,
+      doctor: form.doctor,
+      allergies: form.allergies,
+      insurance: form.insurance,
+      condition: form.condition,
+      status: form.status,
+    }
+
+    if (modalMode === 'add') {
+      addPatient(patientData)
+      toast.success('Patient added successfully!')
+    } else if (editId) {
+      updatePatient(editId, patientData)
+      toast.success('Patient updated successfully!')
+    }
+    setShowModal(false)
+  }
+
+  const handleDoctorChange = (docName: string) => {
+    const doc = doctors.find(d => d.name === docName)
+    setForm({
+      ...form,
+      doctor: docName,
+      department: doc ? doc.department : form.department
+    })
   }
 
   return (
@@ -34,7 +131,7 @@ export default function PatientsPage() {
           <button onClick={() => toast.success('Exporting patient data...')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
             <Download size={15} /> Export
           </button>
-          <button onClick={() => setShowModal(true)} className="btn-primary text-sm py-2.5">
+          <button onClick={openAddModal} className="btn-primary text-sm py-2.5">
             <Plus size={15} /> Add Patient
           </button>
         </div>
@@ -77,7 +174,7 @@ export default function PatientsPage() {
                   </td>
                   <td>
                     <div className="text-xs text-gray-600 flex items-center gap-1"><Phone size={11} /> {p.phone}</div>
-                    <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5"><Mail size={11} /> {p.email.split('@')[0]}...</div>
+                    <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5"><Mail size={11} /> {p.email}</div>
                   </td>
                   <td><span className="flex items-center gap-1 text-sm font-bold text-red-600"><Droplets size={13} />{p.bloodGroup}</span></td>
                   <td><span className="text-sm text-gray-700">{p.department}</span></td>
@@ -87,7 +184,7 @@ export default function PatientsPage() {
                   <td>
                     <div className="flex items-center gap-1.5">
                       <button onClick={() => setViewPatient(p)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"><Eye size={15} /></button>
-                      <button onClick={() => toast.success('Edit mode activated')} className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors"><Edit2 size={15} /></button>
+                      <button onClick={() => openEditModal(p)} className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors"><Edit2 size={15} /></button>
                       <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={15} /></button>
                     </div>
                   </td>
@@ -132,36 +229,87 @@ export default function PatientsPage() {
               ))}
             </div>
             <div className="mt-6 flex gap-3">
-              <button className="flex-1 btn-primary text-sm justify-center py-2.5" onClick={() => toast.success('Opening full profile...')}>View Full Profile</button>
-              <button className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors" onClick={() => setViewPatient(null)}>Close</button>
+              <button className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors w-full" onClick={() => setViewPatient(null)}>Close</button>
             </div>
           </motion.div>
         </div>
       )}
 
-      {/* Add Patient Modal */}
+      {/* Add / Edit Patient Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-            <h2 className="text-xl font-black text-gray-900 mb-6">Add New Patient</h2>
-            <div className="space-y-4">
-              {[['Full Name', 'text', 'John Doe'], ['Email', 'email', 'patient@email.com'], ['Phone', 'tel', '+91 98765 43210'], ['Age', 'number', '35']].map(([label, type, placeholder]) => (
-                <div key={label}>
-                  <label className="form-label">{label}</label>
-                  <input type={type} placeholder={placeholder} className="form-input" />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl my-8">
+            <h2 className="text-xl font-black text-gray-900 mb-6">{modalMode === 'add' ? 'Add New Patient' : 'Edit Patient Profile'}</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Full Name *</label>
+                  <input className="form-input" placeholder="Aarav Sharma" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
                 </div>
-              ))}
-              <div>
-                <label className="form-label">Department</label>
-                <select className="form-input">
-                  <option>Cardiology</option><option>Neurology</option><option>Orthopedics</option><option>Pulmonology</option>
-                </select>
+                <div>
+                  <label className="form-label">Email *</label>
+                  <input type="email" className="form-input" placeholder="aarav@email.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+                </div>
               </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button className="flex-1 btn-primary text-sm justify-center py-3" onClick={() => { setShowModal(false); toast.success('Patient added successfully!') }}>Save Patient</button>
-              <button className="px-5 py-3 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50" onClick={() => setShowModal(false)}>Cancel</button>
-            </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="form-label">Phone *</label>
+                  <input className="form-input" placeholder="+91 98765 43210" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="form-label">Age *</label>
+                  <input type="number" className="form-input" placeholder="34" value={form.age} onChange={e => setForm({ ...form, age: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="form-label">Gender</label>
+                  <select className="form-input" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
+                    <option>Male</option><option>Female</option><option>Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="form-label">Blood Group</label>
+                  <select className="form-input" value={form.bloodGroup} onChange={e => setForm({ ...form, bloodGroup: e.target.value })}>
+                    {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map(bg => <option key={bg}>{bg}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="form-label">Doctor *</label>
+                  <select className="form-input" value={form.doctor} onChange={e => handleDoctorChange(e.target.value)}>
+                    {doctors.map(d => <option key={d.id} value={d.name}>{d.name} ({d.specialty})</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">Allergies</label>
+                  <input className="form-input" placeholder="Penicillin" value={form.allergies} onChange={e => setForm({ ...form, allergies: e.target.value })} />
+                </div>
+                <div>
+                  <label className="form-label">Insurance</label>
+                  <input className="form-input" placeholder="Star Health" value={form.insurance} onChange={e => setForm({ ...form, insurance: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="form-label">Condition / Diagnose</label>
+                <input className="form-input" placeholder="Hypertension" value={form.condition} onChange={e => setForm({ ...form, condition: e.target.value })} />
+              </div>
+              {modalMode === 'edit' && (
+                <div>
+                  <label className="form-label">Status</label>
+                  <select className="form-input" value={form.status} onChange={e => setForm({ ...form, status: e.target.value as any })}>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                </div>
+              )}
+              <div className="flex gap-3 mt-6">
+                <button type="submit" className="flex-1 btn-primary text-sm justify-center py-3">Save Patient</button>
+                <button type="button" className="px-5 py-3 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50" onClick={() => setShowModal(false)}>Cancel</button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}

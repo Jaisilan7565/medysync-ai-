@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, UserRound, Calendar, CreditCard,
   BarChart3, Settings, LogOut, Bell, Search, Menu, X,
   Stethoscope, Bot, QrCode, ClipboardList, UserCheck,
-  Activity, ChevronRight, Pill, ListChecks,
+  Activity, ChevronRight, Pill, ListChecks, UserPlus,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import toast from 'react-hot-toast'
@@ -29,6 +29,7 @@ const navByRole = {
   ],
   receptionist: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/receptionist' },
+    { label: 'Register Patient', icon: UserPlus, path: '/dashboard/receptionist/register-patient' },
     { label: 'Queue', icon: ListChecks, path: '/dashboard/receptionist/queue' },
     { label: 'Book Appointment', icon: Calendar, path: '/dashboard/receptionist/book' },
     { label: 'Appointments', icon: ClipboardList, path: '/dashboard/appointments' },
@@ -38,6 +39,10 @@ const navByRole = {
     { label: 'Medical History', icon: Activity, path: '/dashboard/patient/history' },
     { label: 'My Bills', icon: CreditCard, path: '/dashboard/patient/bills' },
     { label: 'Appointments', icon: Calendar, path: '/dashboard/appointments' },
+  ],
+  pharmacy: [
+    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard/pharmacy' },
+    { label: 'Prescriptions', icon: Pill, path: '/dashboard/pharmacy/prescriptions' },
   ],
 }
 
@@ -51,6 +56,7 @@ const roleColors: Record<string, string> = {
   doctor: 'from-emerald-600 to-teal-500',
   receptionist: 'from-violet-600 to-purple-500',
   patient: 'from-rose-600 to-pink-500',
+  pharmacy: 'from-amber-600 to-yellow-500',
 }
 
 const roleBadgeColor: Record<string, string> = {
@@ -58,12 +64,13 @@ const roleBadgeColor: Record<string, string> = {
   doctor: 'bg-emerald-500/20 text-emerald-300',
   receptionist: 'bg-violet-500/20 text-violet-300',
   patient: 'bg-rose-500/20 text-rose-300',
+  pharmacy: 'bg-amber-500/20 text-amber-300',
 }
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024)
   const [notifOpen, setNotifOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -77,7 +84,15 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -86,7 +101,7 @@ export default function DashboardLayout() {
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="w-64 flex-shrink-0 flex flex-col h-full shadow-sidebar z-20"
+            className="fixed lg:relative w-64 flex-shrink-0 flex flex-col h-full shadow-sidebar z-30"
             style={{ background: 'linear-gradient(180deg, #03045E 0%, #023E8A 60%, #0077B6 100%)' }}
           >
             {/* Logo */}
@@ -122,7 +137,8 @@ export default function DashboardLayout() {
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  end={item.path.endsWith('/dashboard/admin') || item.path.endsWith('/dashboard/doctor') || item.path.endsWith('/dashboard/receptionist') || item.path.endsWith('/dashboard/patient')}
+                  onClick={() => { if (window.innerWidth < 1024) setSidebarOpen(false); }}
+                  end={item.path.endsWith('/dashboard/admin') || item.path.endsWith('/dashboard/doctor') || item.path.endsWith('/dashboard/receptionist') || item.path.endsWith('/dashboard/patient') || item.path.endsWith('/dashboard/pharmacy')}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
                       isActive
@@ -147,6 +163,7 @@ export default function DashboardLayout() {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    onClick={() => { if (window.innerWidth < 1024) setSidebarOpen(false); }}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
                         isActive
