@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Stethoscope, Eye, EyeOff, ArrowRight, Lock, Mail, Shield } from 'lucide-react'
-import { useAuthStore, authenticateUser } from '../../store/authStore'
+import { useAuthStore } from '../../store/authStore'
 import toast from 'react-hot-toast'
 
 const demoCredentials = [
@@ -25,13 +25,12 @@ export default function LoginPage() {
     e.preventDefault()
     if (!email || !password) { toast.error('Please fill in all fields'); return }
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-    const result = authenticateUser(email, password)
-    if (result) {
-      login(result.user, result.token)
-      toast.success(`Welcome back, ${result.user.name.split(' ')[0]}!`)
+    const success = await login(email, password)
+    if (success) {
+      const activeUser = useAuthStore.getState().user
+      toast.success(`Welcome back, ${activeUser?.name.split(' ')[0]}!`)
       const routes: Record<string, string> = { admin: '/dashboard/admin', doctor: '/dashboard/doctor', receptionist: '/dashboard/receptionist', patient: '/dashboard/patient', pharmacy: '/dashboard/pharmacy' }
-      navigate(routes[result.user.role])
+      navigate(routes[activeUser?.role || 'patient'])
     } else {
       toast.error('Invalid email or password')
     }

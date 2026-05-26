@@ -15,12 +15,20 @@ export default function RegisterPage() {
     e.preventDefault()
     if (!form.name || !form.email || !form.password) { toast.error('Please fill all required fields'); return }
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1000))
-    const user = { id: `U${Date.now()}`, name: form.name, email: form.email, role: form.role as any, phone: form.phone }
-    register(user, form.password)
-    toast.success('Account created successfully!')
-    const routes: Record<string, string> = { admin: '/dashboard/admin', doctor: '/dashboard/doctor', receptionist: '/dashboard/receptionist', patient: '/dashboard/patient', pharmacy: '/dashboard/pharmacy' }
-    navigate(routes[form.role])
+    const success = await register({
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      role: form.role as any
+    }, form.password)
+    
+    if (success) {
+      toast.success('Account created successfully!')
+      const routes: Record<string, string> = { admin: '/dashboard/admin', doctor: '/dashboard/doctor', receptionist: '/dashboard/receptionist', patient: '/dashboard/patient', pharmacy: '/dashboard/pharmacy' }
+      navigate(routes[form.role])
+    } else {
+      toast.error('Failed to create account. Email may already be in use.')
+    }
     setLoading(false)
   }
 

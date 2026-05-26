@@ -17,70 +17,77 @@ interface AuthState {
   user: User | null
   token: string | null
   isAuthenticated: boolean
-  registeredUsers: Record<string, { user: User; password: string }>
-  login: (user: User, token: string) => void
-  register: (user: User, password: string) => void
+  login: (email: string, password: string) => Promise<boolean>
+  register: (userData: Omit<User, 'id'>, password: string) => Promise<boolean>
   logout: () => void
+  checkAuth: () => Promise<void>
 }
 
-const demoUsers: Record<string, { user: User; password: string }> = {
-  'admin@medisync.ai': {
-    password: 'admin123',
-    user: { id: 'U001', name: 'Dr. Admin Singh', email: 'admin@medisync.ai', role: 'admin', department: 'Administration' },
-  },
-  'doctor@medisync.ai': {
-    password: 'doctor123',
-    user: { id: 'U002', name: 'Dr. Priya Mehta', email: 'doctor@medisync.ai', role: 'doctor', department: 'Cardiology' },
-  },
-  'receptionist@medisync.ai': {
-    password: 'recept123',
-    user: { id: 'U003', name: 'Anjali Sharma', email: 'receptionist@medisync.ai', role: 'receptionist', department: 'Front Desk' },
-  },
-  'patient@medisync.ai': {
-    password: 'patient123',
-    user: { id: 'U004', name: 'Aarav Sharma', email: 'patient@medisync.ai', role: 'patient' },
-  },
-  'pharmacy@medisync.ai': {
-    password: 'pharmacy123',
-    user: { id: 'U005', name: 'MediSync Pharmacy', email: 'pharmacy@medisync.ai', role: 'pharmacy', department: 'Pharmacy' },
-  },
-}
-
-export const authenticateUser = (email: string, password: string): { user: User; token: string } | null => {
-  const normalizedEmail = email.toLowerCase()
-  const match = demoUsers[normalizedEmail]
-  if (match && match.password === password) {
-    return { user: match.user, token: `demo_jwt_${match.user.id}_${Date.now()}` }
-  }
-
-  // Check stateful registered users
-  const registered = useAuthStore.getState().registeredUsers || {}
-  const regMatch = registered[normalizedEmail]
-  if (regMatch && regMatch.password === password) {
-    return { user: regMatch.user, token: `demo_jwt_${regMatch.user.id}_${Date.now()}` }
-  }
-
-  return null
-}
+const API_URL = import.meta.env.VITE_API_URL || ''
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
-      registeredUsers: {},
-      login: (user, token) => set({ user, token, isAuthenticated: true }),
-      register: (user, password) => set((state) => ({
-        registeredUsers: {
-          ...state.registeredUsers,
-          [user.email.toLowerCase()]: { user, password },
-        },
-        user,
-        token: `demo_jwt_${user.id}_${Date.now()}`,
-        isAuthenticated: true,
-      })),
+
+      login: async (email, password) => {
+        try {
+          const res = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          })
+          if (!res.ok) return false
+          const data = await res.json()
+          set({ user: data.user, token: data.token, isAuthenticated: true })
+          return true
+        } catch (err) {
+          console.error(err)
+          return false
+        }
+      },
+
+      register: async (userData, password) => {
+        try {
+          const res = await fetch(`${API_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...userData, password })
+          })
+          if (!res.ok) {
+            const data = await res.json()
+            throw new Error(data.error || 'Failed to register')
+          }
+          const data = await res.json()
+          set({ user: data.user, token: data.token, isAuthenticated: true })
+          return true
+        } catch (err) {
+          console.error(err)
+          return false
+        }
+      },
+
       logout: () => set({ user: null, token: null, isAuthenticated: false }),
+
+      checkAuth: async () => {
+        const { token } = get()
+        if (!token) return
+        try {
+          const res = await fetch(`${API_URL}/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          if (res.ok) {
+            const data = await res.json()
+            set({ user: data.user, isAuthenticated: true })
+          } else {
+            set({ user: null, token: null, isAuthenticated: false })
+          }
+        } catch (err) {
+          console.error('Failed to check auth:', err)
+        }
+      }
     }),
     { name: 'medisync-auth' }
   )

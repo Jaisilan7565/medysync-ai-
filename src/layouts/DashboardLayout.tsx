@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -8,8 +8,8 @@ import {
   Activity, ChevronRight, Pill, ListChecks, UserPlus,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import { useDataStore } from '../store/dataStore'
 import toast from 'react-hot-toast'
-import { mockNotifications } from '../data/mockData'
 
 const navByRole = {
   admin: [
@@ -68,14 +68,21 @@ const roleBadgeColor: Record<string, string> = {
 }
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuthStore()
+  const { user, logout, checkAuth } = useAuthStore()
+  const { notifications, fetchData, markNotificationsRead } = useDataStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024)
   const [notifOpen, setNotifOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const navLinks = navByRole[user?.role || 'patient']
-  const unreadCount = mockNotifications.filter(n => !n.read).length
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  useEffect(() => {
+    checkAuth().then(() => {
+      fetchData()
+    })
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -249,10 +256,10 @@ export default function DashboardLayout() {
                   >
                     <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
-                      <span className="text-xs text-medical-cyan font-medium cursor-pointer">Mark all read</span>
+                      <span onClick={() => markNotificationsRead()} className="text-xs text-medical-cyan font-medium cursor-pointer hover:underline">Mark all read</span>
                     </div>
                     <div className="max-h-72 overflow-y-auto">
-                      {mockNotifications.map(n => (
+                      {notifications.map(n => (
                         <div key={n.id} className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${!n.read ? 'bg-blue-50/50' : ''}`}>
                           <div className="flex items-start gap-3">
                             <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!n.read ? 'bg-medical-cyan' : 'bg-gray-300'}`} />
@@ -263,6 +270,9 @@ export default function DashboardLayout() {
                           </div>
                         </div>
                       ))}
+                      {notifications.length === 0 && (
+                        <p className="text-xs text-gray-400 text-center py-4">No notifications found.</p>
+                      )}
                     </div>
                   </motion.div>
                 )}
