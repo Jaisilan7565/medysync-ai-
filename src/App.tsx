@@ -1,46 +1,47 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { lazy, Suspense } from 'react'
 import { useAuthStore } from './store/authStore'
 
-// Public pages
-import LandingPage from './pages/public/LandingPage'
-import LoginPage from './pages/public/LoginPage'
-import RegisterPage from './pages/public/RegisterPage'
+// Public pages (lazy loaded)
+const LandingPage = lazy(() => import('./pages/public/LandingPage'))
+const LoginPage = lazy(() => import('./pages/public/LoginPage'))
+const RegisterPage = lazy(() => import('./pages/public/RegisterPage'))
+const NotFoundPage = lazy(() => import('./pages/public/NotFoundPage'))
 
-// Dashboard layout
+// Dashboard layout (statically imported for instant shell rendering)
 import DashboardLayout from './layouts/DashboardLayout'
 
-// Admin pages
-import AdminDashboard from './pages/dashboard/admin/AdminDashboard'
-import PatientsPage from './pages/dashboard/admin/PatientsPage'
-import DoctorsPage from './pages/dashboard/admin/DoctorsPage'
-import BillingPage from './pages/dashboard/admin/BillingPage'
-import AnalyticsPage from './pages/dashboard/admin/AnalyticsPage'
-import SettingsPage from './pages/dashboard/admin/SettingsPage'
+// Admin pages (lazy loaded)
+const AdminDashboard = lazy(() => import('./pages/dashboard/admin/AdminDashboard'))
+const PatientsPage = lazy(() => import('./pages/dashboard/admin/PatientsPage'))
+const DoctorsPage = lazy(() => import('./pages/dashboard/admin/DoctorsPage'))
+const BillingPage = lazy(() => import('./pages/dashboard/admin/BillingPage'))
+const AnalyticsPage = lazy(() => import('./pages/dashboard/admin/AnalyticsPage'))
+const SettingsPage = lazy(() => import('./pages/dashboard/admin/SettingsPage'))
 
-// Doctor pages
-import DoctorDashboard from './pages/dashboard/doctor/DoctorDashboard'
-import DoctorAppointments from './pages/dashboard/doctor/DoctorAppointments'
-import DoctorPatients from './pages/dashboard/doctor/DoctorPatients'
-import DoctorPrescriptions from './pages/dashboard/doctor/DoctorPrescriptions'
+// Doctor pages (lazy loaded)
+const DoctorDashboard = lazy(() => import('./pages/dashboard/doctor/DoctorDashboard'))
+const DoctorAppointments = lazy(() => import('./pages/dashboard/doctor/DoctorAppointments'))
+const DoctorPatients = lazy(() => import('./pages/dashboard/doctor/DoctorPatients'))
+const DoctorPrescriptions = lazy(() => import('./pages/dashboard/doctor/DoctorPrescriptions'))
 
-// Receptionist pages
-import ReceptionistDashboard from './pages/dashboard/receptionist/ReceptionistDashboard'
-import QueueManagement from './pages/dashboard/receptionist/QueueManagement'
-import AppointmentBooking from './pages/dashboard/receptionist/AppointmentBooking'
-import RegisterPatient from './pages/dashboard/receptionist/RegisterPatient'
+// Receptionist pages (lazy loaded)
+const ReceptionistDashboard = lazy(() => import('./pages/dashboard/receptionist/ReceptionistDashboard'))
+const QueueManagement = lazy(() => import('./pages/dashboard/receptionist/QueueManagement'))
+const AppointmentBooking = lazy(() => import('./pages/dashboard/receptionist/AppointmentBooking'))
+const RegisterPatient = lazy(() => import('./pages/dashboard/receptionist/RegisterPatient'))
 
-// Patient pages
-import PatientDashboard from './pages/dashboard/patient/PatientDashboard'
-import PatientHistory from './pages/dashboard/patient/PatientHistory'
-import PatientBills from './pages/dashboard/patient/PatientBills'
-import PharmacyDashboard from './pages/dashboard/pharmacy/PharmacyDashboard'
+// Patient pages (lazy loaded)
+const PatientDashboard = lazy(() => import('./pages/dashboard/patient/PatientDashboard'))
+const PatientHistory = lazy(() => import('./pages/dashboard/patient/PatientHistory'))
+const PatientBills = lazy(() => import('./pages/dashboard/patient/PatientBills'))
+const PharmacyDashboard = lazy(() => import('./pages/dashboard/pharmacy/PharmacyDashboard'))
 
-// Shared pages
-import AppointmentsPage from './pages/dashboard/shared/AppointmentsPage'
-import AIAssistant from './pages/dashboard/shared/AIAssistant'
-import EmergencyWallet from './pages/dashboard/shared/EmergencyWallet'
-import NotFoundPage from './pages/public/NotFoundPage'
+// Shared pages (lazy loaded)
+const AppointmentsPage = lazy(() => import('./pages/dashboard/shared/AppointmentsPage'))
+const AIAssistant = lazy(() => import('./pages/dashboard/shared/AIAssistant'))
+const EmergencyWallet = lazy(() => import('./pages/dashboard/shared/EmergencyWallet'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -77,53 +78,62 @@ export default function App() {
           error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } },
         }}
       />
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen bg-slate-50">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm font-semibold text-slate-500 font-sans">Loading MediSync AI...</p>
+          </div>
+        </div>
+      }>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        {/* Dashboard Routes */}
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-          <Route index element={<DashboardRedirect />} />
+          {/* Dashboard Routes */}
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+            <Route index element={<DashboardRedirect />} />
 
-          {/* Admin */}
-          <Route path="admin" element={<RoleRoute allowedRoles={['admin']}><AdminDashboard /></RoleRoute>} />
-          <Route path="admin/patients" element={<RoleRoute allowedRoles={['admin']}><PatientsPage /></RoleRoute>} />
-          <Route path="admin/doctors" element={<RoleRoute allowedRoles={['admin']}><DoctorsPage /></RoleRoute>} />
-          <Route path="admin/billing" element={<RoleRoute allowedRoles={['admin']}><BillingPage /></RoleRoute>} />
-          <Route path="admin/analytics" element={<RoleRoute allowedRoles={['admin']}><AnalyticsPage /></RoleRoute>} />
-          <Route path="admin/settings" element={<RoleRoute allowedRoles={['admin']}><SettingsPage /></RoleRoute>} />
+            {/* Admin */}
+            <Route path="admin" element={<RoleRoute allowedRoles={['admin']}><AdminDashboard /></RoleRoute>} />
+            <Route path="admin/patients" element={<RoleRoute allowedRoles={['admin']}><PatientsPage /></RoleRoute>} />
+            <Route path="admin/doctors" element={<RoleRoute allowedRoles={['admin']}><DoctorsPage /></RoleRoute>} />
+            <Route path="admin/billing" element={<RoleRoute allowedRoles={['admin']}><BillingPage /></RoleRoute>} />
+            <Route path="admin/analytics" element={<RoleRoute allowedRoles={['admin']}><AnalyticsPage /></RoleRoute>} />
+            <Route path="admin/settings" element={<RoleRoute allowedRoles={['admin']}><SettingsPage /></RoleRoute>} />
 
-          {/* Doctor */}
-          <Route path="doctor" element={<RoleRoute allowedRoles={['doctor']}><DoctorDashboard /></RoleRoute>} />
-          <Route path="doctor/appointments" element={<RoleRoute allowedRoles={['doctor']}><DoctorAppointments /></RoleRoute>} />
-          <Route path="doctor/patients" element={<RoleRoute allowedRoles={['doctor']}><DoctorPatients /></RoleRoute>} />
-          <Route path="doctor/prescriptions" element={<RoleRoute allowedRoles={['doctor']}><DoctorPrescriptions /></RoleRoute>} />
+            {/* Doctor */}
+            <Route path="doctor" element={<RoleRoute allowedRoles={['doctor']}><DoctorDashboard /></RoleRoute>} />
+            <Route path="doctor/appointments" element={<RoleRoute allowedRoles={['doctor']}><DoctorAppointments /></RoleRoute>} />
+            <Route path="doctor/patients" element={<RoleRoute allowedRoles={['doctor']}><DoctorPatients /></RoleRoute>} />
+            <Route path="doctor/prescriptions" element={<RoleRoute allowedRoles={['doctor']}><DoctorPrescriptions /></RoleRoute>} />
 
-          {/* Receptionist */}
-          <Route path="receptionist" element={<RoleRoute allowedRoles={['receptionist']}><ReceptionistDashboard /></RoleRoute>} />
-          <Route path="receptionist/queue" element={<RoleRoute allowedRoles={['receptionist']}><QueueManagement /></RoleRoute>} />
-          <Route path="receptionist/book" element={<RoleRoute allowedRoles={['receptionist']}><AppointmentBooking /></RoleRoute>} />
-          <Route path="receptionist/register-patient" element={<RoleRoute allowedRoles={['receptionist']}><RegisterPatient /></RoleRoute>} />
+            {/* Receptionist */}
+            <Route path="receptionist" element={<RoleRoute allowedRoles={['receptionist']}><ReceptionistDashboard /></RoleRoute>} />
+            <Route path="receptionist/queue" element={<RoleRoute allowedRoles={['receptionist']}><QueueManagement /></RoleRoute>} />
+            <Route path="receptionist/book" element={<RoleRoute allowedRoles={['receptionist']}><AppointmentBooking /></RoleRoute>} />
+            <Route path="receptionist/register-patient" element={<RoleRoute allowedRoles={['receptionist']}><RegisterPatient /></RoleRoute>} />
 
-          {/* Patient */}
-          <Route path="patient" element={<RoleRoute allowedRoles={['patient']}><PatientDashboard /></RoleRoute>} />
-          <Route path="patient/history" element={<RoleRoute allowedRoles={['patient']}><PatientHistory /></RoleRoute>} />
-          <Route path="patient/bills" element={<RoleRoute allowedRoles={['patient']}><PatientBills /></RoleRoute>} />
+            {/* Patient */}
+            <Route path="patient" element={<RoleRoute allowedRoles={['patient']}><PatientDashboard /></RoleRoute>} />
+            <Route path="patient/history" element={<RoleRoute allowedRoles={['patient']}><PatientHistory /></RoleRoute>} />
+            <Route path="patient/bills" element={<RoleRoute allowedRoles={['patient']}><PatientBills /></RoleRoute>} />
 
-          {/* Pharmacy */}
-          <Route path="pharmacy" element={<RoleRoute allowedRoles={['pharmacy']}><PharmacyDashboard /></RoleRoute>} />
-          <Route path="pharmacy/prescriptions" element={<RoleRoute allowedRoles={['pharmacy']}><PharmacyDashboard /></RoleRoute>} />
+            {/* Pharmacy */}
+            <Route path="pharmacy" element={<RoleRoute allowedRoles={['pharmacy']}><PharmacyDashboard /></RoleRoute>} />
+            <Route path="pharmacy/prescriptions" element={<RoleRoute allowedRoles={['pharmacy']}><PharmacyDashboard /></RoleRoute>} />
 
-          {/* Shared */}
-          <Route path="appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
-          <Route path="ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
-          <Route path="emergency-wallet" element={<ProtectedRoute><EmergencyWallet /></ProtectedRoute>} />
-        </Route>
+            {/* Shared */}
+            <Route path="appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
+            <Route path="ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
+            <Route path="emergency-wallet" element={<ProtectedRoute><EmergencyWallet /></ProtectedRoute>} />
+          </Route>
 
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }
