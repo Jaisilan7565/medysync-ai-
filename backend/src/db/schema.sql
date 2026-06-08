@@ -40,7 +40,11 @@ CREATE TABLE IF NOT EXISTS patients (
     address TEXT,
     allergies TEXT DEFAULT 'None',
     insurance VARCHAR(100),
-    status VARCHAR(20) DEFAULT 'Active' -- Active | Inactive | Critical
+    status VARCHAR(20) DEFAULT 'Active', -- Active | Inactive | Critical
+    doctor VARCHAR(100) DEFAULT 'Dr. Priya Mehta',
+    department VARCHAR(100) DEFAULT 'Cardiology',
+    last_visit VARCHAR(30) DEFAULT '2026-05-10',
+    appointment_count INTEGER DEFAULT 5
 );
 
 CREATE TABLE IF NOT EXISTS appointments (

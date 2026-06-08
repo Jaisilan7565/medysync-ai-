@@ -1,32 +1,32 @@
 import { motion } from 'framer-motion'
 import { Users, Stethoscope, Calendar, TrendingUp, AlertTriangle, CreditCard, Activity, Clock, ArrowUpRight, ArrowDownRight } from 'lucide-react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts'
-import { adminStats, mockRevenueData, mockDepartmentRevenue, mockAppointments, mockPatients, mockNotifications } from '../../../data/mockData'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { mockRevenueData, mockDepartmentRevenue } from '../../../data/mockData'
 import { useAuthStore } from '../../../store/authStore'
-
-const statCards = [
-  { label: 'Total Patients', value: adminStats.totalPatients.toLocaleString(), icon: Users, change: '+8.2%', positive: true, color: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50', iconColor: 'text-blue-500' },
-  { label: 'Active Doctors', value: adminStats.totalDoctors, icon: Stethoscope, change: '+2', positive: true, color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
-  { label: "Today's Appointments", value: adminStats.todayAppointments, icon: Calendar, change: '+12%', positive: true, color: 'from-violet-500 to-purple-500', bg: 'bg-violet-50', iconColor: 'text-violet-500' },
-  { label: 'Monthly Revenue', value: `₹${(adminStats.monthlyRevenue / 100000).toFixed(1)}L`, icon: TrendingUp, change: '+6.4%', positive: true, color: 'from-amber-500 to-orange-500', bg: 'bg-amber-50', iconColor: 'text-amber-500' },
-  { label: 'Pending Bills', value: adminStats.pendingBills, icon: CreditCard, change: '-3', positive: false, color: 'from-rose-500 to-pink-500', bg: 'bg-rose-50', iconColor: 'text-rose-500' },
-  { label: 'Emergency Cases', value: adminStats.emergencyCases, icon: AlertTriangle, change: 'Live', positive: false, color: 'from-red-500 to-rose-600', bg: 'bg-red-50', iconColor: 'text-red-500' },
-  { label: 'Bed Occupancy', value: `${adminStats.bedOccupancy}%`, icon: Activity, change: '+3%', positive: false, color: 'from-sky-500 to-blue-500', bg: 'bg-sky-50', iconColor: 'text-sky-500' },
-  { label: 'Avg Wait Time', value: `${adminStats.avgWaitTime} min`, icon: Clock, change: '-4 min', positive: true, color: 'from-indigo-500 to-violet-500', bg: 'bg-indigo-50', iconColor: 'text-indigo-500' },
-]
+import { useDataStore } from '../../../store/dataStore'
 
 const statusColor: Record<string, string> = {
   Confirmed: 'badge-success', Waiting: 'badge-warning', 'In Progress': 'badge-info',
   Scheduled: 'badge-info', Cancelled: 'badge-danger', Emergency: 'badge-danger',
 }
 
-const priorityColor: Record<string, string> = {
-  Normal: 'text-gray-500', High: 'text-amber-600', Emergency: 'text-red-600',
-}
-
 export default function AdminDashboard() {
   const { user } = useAuthStore()
-  const todayAppts = mockAppointments.slice(0, 5)
+  const { adminStats, appointments, notifications } = useDataStore()
+
+  const todayAppts = appointments.slice(0, 5)
+  const recentNotifications = notifications.slice(0, 5)
+
+  const dynamicStatCards = [
+    { label: 'Total Patients', value: adminStats.totalPatients.toLocaleString(), icon: Users, change: '+8.2%', positive: true, color: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50', iconColor: 'text-blue-500' },
+    { label: 'Active Doctors', value: adminStats.totalDoctors, icon: Stethoscope, change: '+2', positive: true, color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
+    { label: "Today's Appointments", value: adminStats.todayAppointments, icon: Calendar, change: '+12%', positive: true, color: 'from-violet-500 to-purple-500', bg: 'bg-violet-50', iconColor: 'text-violet-500' },
+    { label: 'Monthly Revenue', value: `₹${adminStats.monthlyRevenue.toLocaleString()}`, icon: TrendingUp, change: '+6.4%', positive: true, color: 'from-amber-500 to-orange-500', bg: 'bg-amber-50', iconColor: 'text-amber-500' },
+    { label: 'Pending Bills', value: adminStats.pendingBills, icon: CreditCard, change: '-3', positive: false, color: 'from-rose-500 to-pink-500', bg: 'bg-rose-50', iconColor: 'text-rose-500' },
+    { label: 'Emergency Cases', value: adminStats.emergencyCases, icon: AlertTriangle, change: 'Live', positive: false, color: 'from-red-500 to-rose-600', bg: 'bg-red-50', iconColor: 'text-red-500' },
+    { label: 'Bed Occupancy', value: `${adminStats.bedOccupancy}%`, icon: Activity, change: '+3%', positive: false, color: 'from-sky-500 to-blue-500', bg: 'bg-sky-50', iconColor: 'text-sky-500' },
+    { label: 'Avg Wait Time', value: `${adminStats.avgWaitTime} min`, icon: Clock, change: '-4 min', positive: true, color: 'from-indigo-500 to-violet-500', bg: 'bg-indigo-50', iconColor: 'text-indigo-500' },
+  ]
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -34,7 +34,7 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Welcome back, {user?.name?.split(' ')[0]} 👋 — Thursday, May 15, 2026</p>
+          <p className="text-gray-500 text-sm mt-0.5">Welcome back, {user?.name?.split(' ')[0]} 👋 — Live Clinic Monitor</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((s, i) => (
+        {dynamicStatCards.map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
             className="stat-card">
             <div className="flex items-start justify-between mb-3">
@@ -154,6 +154,11 @@ export default function AdminDashboard() {
                     <td><span className={`badge ${statusColor[a.status] || 'badge-info'}`}>{a.status}</span></td>
                   </tr>
                 ))}
+                {todayAppts.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center py-6 text-gray-400 text-sm">No appointments scheduled today.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -163,15 +168,18 @@ export default function AdminDashboard() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="lg:col-span-2 dashboard-card">
           <h3 className="font-bold text-gray-900 mb-4">Recent Activity</h3>
           <div className="space-y-3">
-            {mockNotifications.map(n => (
+            {recentNotifications.map(n => (
               <div key={n.id} className={`flex items-start gap-3 p-3 rounded-xl ${!n.read ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50'}`}>
                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!n.read ? 'bg-blue-500' : 'bg-gray-300'}`} />
                 <div className="min-w-0">
                   <p className="text-sm text-gray-700 leading-snug">{n.message}</p>
-                  <p className="text-xs text-gray-400 mt-1">{n.time}</p>
+                  <p className="text-xs text-gray-400 mt-1">{n.time || 'Just now'}</p>
                 </div>
               </div>
             ))}
+            {recentNotifications.length === 0 && (
+              <div className="text-center py-6 text-gray-400 text-sm">No recent activity logs.</div>
+            )}
           </div>
         </motion.div>
       </div>

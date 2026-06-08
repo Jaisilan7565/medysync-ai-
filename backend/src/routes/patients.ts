@@ -29,9 +29,10 @@ router.get('/', authenticateJWT, async (req, res) => {
       address: r.address,
       allergies: r.allergies,
       insurance: r.insurance,
-      lastVisit: '2026-05-10', // dynamically computed or default
-      doctor: 'Dr. Priya Mehta',
-      appointmentCount: 5
+      lastVisit: r.last_visit,
+      doctor: r.doctor,
+      department: r.department,
+      appointmentCount: r.appointment_count
     }))
     res.json(camelCased)
   } catch (err) {
@@ -67,7 +68,11 @@ router.get('/:id', authenticateJWT, async (req, res) => {
       status: r.status,
       address: r.address,
       allergies: r.allergies,
-      insurance: r.insurance
+      insurance: r.insurance,
+      doctor: r.doctor,
+      department: r.department,
+      lastVisit: r.last_visit,
+      appointmentCount: r.appointment_count
     })
   } catch (err) {
     res.status(500).json({ error: 'Failed to retrieve patient profile details' })
@@ -76,7 +81,7 @@ router.get('/:id', authenticateJWT, async (req, res) => {
 
 // Create New Patient (and user)
 router.post('/', authenticateJWT, requireRole(['admin', 'receptionist']), async (req, res) => {
-  const { name, email, phone, age, gender, bloodGroup, condition, address, allergies, insurance, doctor } = req.body
+  const { name, email, phone, age, gender, bloodGroup, condition, address, allergies, insurance, doctor, department } = req.body
   if (!name || !email) {
     return res.status(400).json({ error: 'Name and email are required' })
   }
@@ -99,8 +104,8 @@ router.post('/', authenticateJWT, requireRole(['admin', 'receptionist']), async 
     )
 
     await client.query(
-      'INSERT INTO patients (id, age, gender, blood_group, condition, address, allergies, insurance, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
-      [userId, age || 30, gender || 'Male', bloodGroup || 'O+', condition || null, address || null, allergies || 'None', insurance || null, 'Active']
+      'INSERT INTO patients (id, age, gender, blood_group, condition, address, allergies, insurance, status, doctor, department, last_visit, appointment_count) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_DATE, 1)',
+      [userId, age || 30, gender || 'Male', bloodGroup || 'O+', condition || null, address || null, allergies || 'None', insurance || null, 'Active', doctor || 'Dr. Priya Mehta', department || 'Cardiology']
     )
 
     await client.query('COMMIT')
@@ -127,10 +132,9 @@ router.post('/', authenticateJWT, requireRole(['admin', 'receptionist']), async 
   }
 })
 
-// Update Patient
 router.put('/:id', authenticateJWT, async (req, res) => {
   const { id } = req.params
-  const { name, phone, age, gender, bloodGroup, condition, address, allergies, insurance, status } = req.body
+  const { name, phone, age, gender, bloodGroup, condition, address, allergies, insurance, status, doctor, department } = req.body
 
   const client = await pool.connect()
   try {
@@ -152,9 +156,11 @@ router.put('/:id', authenticateJWT, async (req, res) => {
         address = COALESCE($5, address), 
         allergies = COALESCE($6, allergies), 
         insurance = COALESCE($7, insurance),
-        status = COALESCE($8, status)
-       WHERE id = $9`,
-      [age, gender, bloodGroup, condition, address, allergies, insurance, status, id]
+        status = COALESCE($8, status),
+        doctor = COALESCE($9, doctor),
+        department = COALESCE($10, department)
+       WHERE id = $11`,
+      [age, gender, bloodGroup, condition, address, allergies, insurance, status, doctor, department, id]
     )
 
     await client.query('COMMIT')

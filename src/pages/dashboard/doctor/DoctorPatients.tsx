@@ -1,12 +1,21 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Search, Eye, Droplets } from 'lucide-react'
-import { mockPatients } from '../../../data/mockData'
+import { useAuthStore } from '../../../store/authStore'
+import { useDataStore } from '../../../store/dataStore'
 import toast from 'react-hot-toast'
 
 export default function DoctorPatients() {
   const [search, setSearch] = useState('')
-  const myPatients = mockPatients.filter(p => p.doctor.includes('Priya'))
+  const { user } = useAuthStore()
+  const { patients } = useDataStore()
+
+  const myPatients = patients.filter(p => {
+    if (!user?.name) return false
+    const cleanDocName = user.name.replace('Dr. ', '').toLowerCase().trim()
+    return p.doctor.toLowerCase().includes(cleanDocName)
+  })
+
   const filtered = myPatients.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
@@ -33,7 +42,7 @@ export default function DoctorPatients() {
                 <p className="text-sm text-blue-600 font-medium mt-1">{p.condition}</p>
                 <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                   <span className="flex items-center gap-1 font-bold text-red-600"><Droplets size={11} />{p.bloodGroup}</span>
-                  <span>Last: {p.lastVisit}</span>
+                  <span>Last: {p.lastVisit ? new Date(p.lastVisit).toLocaleDateString() : 'N/A'}</span>
                   <span>Allergies: {p.allergies}</span>
                 </div>
               </div>
@@ -44,6 +53,9 @@ export default function DoctorPatients() {
             </div>
           </motion.div>
         ))}
+        {filtered.length === 0 && (
+          <div className="col-span-2 text-center py-8 text-gray-400 text-sm">No patients found under your care.</div>
+        )}
       </div>
     </div>
   )

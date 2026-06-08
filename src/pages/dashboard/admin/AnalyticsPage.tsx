@@ -2,22 +2,27 @@ import { motion } from 'framer-motion'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
 import { mockRevenueData, mockAppointmentStats, mockDepartmentRevenue, mockDepartments } from '../../../data/mockData'
 import { TrendingUp, Users, Calendar, CreditCard } from 'lucide-react'
+import { useDataStore } from '../../../store/dataStore'
 
 export default function AnalyticsPage() {
+  const { adminStats, patients, appointments, invoices } = useDataStore()
+
+  const avgInvoice = invoices.length > 0 ? Math.round(invoices.reduce((s, iv) => s + iv.amount, 0) / invoices.length) : 0
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-black text-gray-900">Analytics & Reports</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Comprehensive insights for May 2026</p>
+        <p className="text-gray-500 text-sm mt-0.5">Comprehensive live insights</p>
       </div>
 
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Revenue', value: '₹2.78L', sub: '+6.4% vs last month', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'New Patients', value: '127', sub: '+18% this month', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Appointments', value: '1,843', sub: '97.2% completion rate', icon: Calendar, color: 'text-violet-600', bg: 'bg-violet-50' },
-          { label: 'Avg. Invoice', value: '₹3,240', sub: '+12% vs last month', icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Total Revenue', value: `₹${adminStats.monthlyRevenue.toLocaleString()}`, sub: '+6.4% vs last month', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Total Patients', value: patients.length.toString(), sub: '+18% this month', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Appointments Count', value: appointments.length.toString(), sub: '97.2% completion rate', icon: Calendar, color: 'text-violet-600', bg: 'bg-violet-50' },
+          { label: 'Avg. Invoice', value: `₹${avgInvoice.toLocaleString()}`, sub: '+12% vs last month', icon: CreditCard, color: 'text-amber-600', bg: 'bg-amber-50' },
         ].map((k, i) => (
           <motion.div key={k.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="stat-card">
             <div className={`w-10 h-10 rounded-xl ${k.bg} flex items-center justify-center mb-3`}>

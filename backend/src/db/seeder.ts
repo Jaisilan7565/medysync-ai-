@@ -68,8 +68,8 @@ export const seedDatabase = async () => {
 
     // 4. Seed default patient details
     await client.query(
-      'INSERT INTO patients (id, age, gender, blood_group, condition, address, allergies, insurance, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
-      ['P001', 34, 'Male', 'O+', 'Hypertension', 'Mumbai, Maharashtra', 'Penicillin', 'Star Health', 'Active']
+      'INSERT INTO patients (id, age, gender, blood_group, condition, address, allergies, insurance, status, doctor, department, last_visit, appointment_count) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)',
+      ['P001', 34, 'Male', 'O+', 'Hypertension', 'Mumbai, Maharashtra', 'Penicillin', 'Star Health', 'Active', 'Dr. Priya Mehta', 'Cardiology', '2026-05-10', 5]
     )
 
     await client.query('COMMIT')
