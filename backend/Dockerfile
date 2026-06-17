@@ -1,5 +1,5 @@
 # Stage 1: Build React Frontend
-FROM node:18-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -7,15 +7,15 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Build Node/Express Backend
-FROM node:18-alpine AS backend-builder
+FROM node:20-alpine AS backend-builder
 WORKDIR /app/backend
 COPY backend/package*.json ./
 RUN npm ci
 COPY backend/ ./
-RUN tsc
+RUN npm run build
 
 # Stage 3: Final Production Runner Image
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
